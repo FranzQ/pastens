@@ -19,8 +19,8 @@ export default function Home() {
     e.preventDefault();
     if (!ensName.trim()) return;
     
-    // Add .eth suffix if not present
-    let searchName = ensName.trim();
+    // Convert to lowercase and add .eth suffix if not present
+    let searchName = ensName.trim().toLowerCase();
     if (!searchName.endsWith('.eth')) {
       searchName = searchName + '.eth';
     }
@@ -144,9 +144,10 @@ export default function Home() {
                 <input
                   type="text"
                   value={ensName}
-                  onChange={(e) => setEnsName(e.target.value)}
+                  onChange={(e) => setEnsName(e.target.value.toLowerCase())}
                   placeholder="Enter ENS name (e.g., ens.eth)"
                   className="w-full px-6 py-4 text-lg rounded-xl border-2 border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md"
+                  style={{ textTransform: 'lowercase' }}
                   disabled={isSearching}
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
