@@ -1,0 +1,163 @@
+import { NextResponse } from "next/server";
+import { GraphQLClient } from "graphql-request";
+
+// The Graph ENS subgraph endpoint
+const getSubgraphUrl = () => {
+  const apiKey = process.env.THE_GRAPH_API_KEY;
+  if (apiKey) {
+    return `https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/5XqPmWe6gjyrJtFn9cLy237i4cWw2j9HcUJEXsP5qGtH`;
+  }
+  return "https://api.thegraph.com/subgraphs/name/ensdomains/ens";
+};
+
+// GraphQL query to get transfers with domain information
+// We'll fetch a large number of transfers and aggregate by domain
+const GET_TRANSFERS_WITH_DOMAINS = `
+  query GetTransfersWithDomains($first: Int!, $skip: Int!, $orderDirection: String!) {
+    transfers(
+      first: $first
+      skip: $skip
+      orderBy: blockNumber
+      orderDirection: $orderDirection
+    ) {
+      id
+      domain {
+        id
+        name
+      }
+      blockNumber
+      transactionID
+      owner {
+        id
+      }
+    }
+  }
+`;
+
+interface Transfer {
+  id: string;
+  domain: {
+    id: string;
+    name: string;
+  };
+  blockNumber: string;
+  transactionID: string;
+  owner: {
+    id: string;
+  };
+}
+
+interface DomainTransferCount {
+  name: string;
+  transferCount: number;
+}
+
+export async function GET() {
+  try {
+    const subgraphUrl = getSubgraphUrl();
+    const apiKey = process.env.THE_GRAPH_API_KEY;
+    const client = new GraphQLClient(subgraphUrl, {
+      headers: apiKey && !subgraphUrl.includes('gateway.thegraph.com')
+        ? {
+          Authorization: `Bearer ${apiKey}`,
+        }
+        : {},
+    });
+
+    // Fetch transfers in batches to get a good sample
+    // We'll fetch from both ends (recent and old) to get better coverage
+    const batchSize = 1000;
+    const batchesPerDirection = 3; // Fetch 3000 transfers from each direction = 6000 total
+    const allTransfers: Transfer[] = [];
+
+    // Helper function to fetch batches
+    const fetchBatches = async (orderDirection: "asc" | "desc", label: string) => {
+      for (let i = 0; i < batchesPerDirection; i++) {
+        try {
+          const data = await client.request<{
+            transfers: Transfer[];
+          }>(GET_TRANSFERS_WITH_DOMAINS, {
+            first: batchSize,
+            skip: i * batchSize,
+            orderDirection,
+          });
+
+          if (!data.transfers || data.transfers.length === 0) {
+            break; // No more transfers
+          }
+
+          allTransfers.push(...data.transfers);
+
+          // If we got fewer than batchSize, we've reached the end
+          if (data.transfers.length < batchSize) {
+            break;
+          }
+        } catch (error: any) {
+          // Handle rate limiting
+          if (error.response?.status === 429) {
+            throw error; // Re-throw to be handled by outer catch
+          }
+          // For other errors, continue with what we have
+          console.error(`Error fetching ${label} batch ${i}:`, error);
+          break;
+        }
+      }
+    };
+
+    try {
+      // Fetch recent transfers (descending order)
+      await fetchBatches("desc", "recent");
+      
+      // Fetch older transfers (ascending order) for better coverage
+      await fetchBatches("asc", "old");
+    } catch (error: any) {
+      // Handle rate limiting
+      if (error.response?.status === 429) {
+        return NextResponse.json(
+          {
+            error: "Rate limit exceeded. The Graph API is rate-limiting requests. Please wait a moment and try again."
+          },
+          { status: 429 }
+        );
+      }
+      // If we have some transfers, continue with what we have
+      if (allTransfers.length === 0) {
+        throw error;
+      }
+    }
+
+    // Group transfers by domain name and count
+    const domainCounts = new Map<string, number>();
+
+    for (const transfer of allTransfers) {
+      if (transfer.domain && transfer.domain.name) {
+        const domainName = transfer.domain.name.toLowerCase();
+        const currentCount = domainCounts.get(domainName) || 0;
+        domainCounts.set(domainName, currentCount + 1);
+      }
+    }
+
+    // Convert to array and sort by count
+    const domainTransferCounts: DomainTransferCount[] = Array.from(
+      domainCounts.entries()
+    )
+      .map(([name, transferCount]) => ({
+        name,
+        transferCount,
+      }))
+      .sort((a, b) => b.transferCount - a.transferCount)
+      .slice(0, 10); // Top 10
+
+    return NextResponse.json({
+      leaderboard: domainTransferCounts,
+      totalTransfersAnalyzed: allTransfers.length,
+    });
+  } catch (error: any) {
+    console.error("Error fetching leaderboard:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to fetch leaderboard" },
+      { status: 500 }
+    );
+  }
+}
+

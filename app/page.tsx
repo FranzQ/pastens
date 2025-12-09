@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Search, Volume2 } from "lucide-react";
 import ENSHistory, { ENSOwner } from "./components/ENSHistory";
 import ENSHistorySkeleton from "./components/ENSHistorySkeleton";
+import Leaderboard from "./components/Leaderboard";
 
 export default function Home() {
   const [ensName, setEnsName] = useState("");
@@ -14,13 +15,11 @@ export default function Home() {
     owners: ENSOwner[];
     currentOwner?: ENSOwner;
   } | null>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!ensName.trim()) return;
-    
+  const performSearch = async (name: string) => {
     // Convert to lowercase and add .eth suffix if not present
-    let searchName = ensName.trim().toLowerCase();
+    let searchName = name.trim().toLowerCase();
     if (!searchName.endsWith('.eth')) {
       searchName = searchName + '.eth';
     }
@@ -57,6 +56,24 @@ export default function Home() {
     } finally {
       setIsSearching(false);
     }
+  };
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ensName.trim()) return;
+    await performSearch(ensName);
+  };
+
+  const handleLeaderboardClick = (name: string) => {
+    setEnsName(name);
+    // Scroll immediately when clicking leaderboard item
+    setTimeout(() => {
+      resultsRef.current?.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    }, 0);
+    performSearch(name);
   };
 
   return (
@@ -137,6 +154,11 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Leaderboard - Collapsible, above search */}
+          <div className="mb-16">
+            <Leaderboard onDomainClick={handleLeaderboardClick} />
+          </div>
+
           {/* Search Form */}
           <form onSubmit={handleSearch} className="mb-16">
             <div className="flex flex-col sm:flex-row gap-4">
@@ -166,7 +188,7 @@ export default function Home() {
           </form>
 
           {/* Results Area */}
-          <div className="bg-white rounded-2xl shadow-xl p-4 md:p-8 border border-gray-200 overflow-hidden">
+          <div ref={resultsRef} className="bg-white rounded-2xl shadow-xl p-4 md:p-8 border border-gray-200 overflow-hidden">
             {error ? (
               <div className="text-center text-red-600">
                 <p className="text-lg font-semibold">Error</p>
