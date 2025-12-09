@@ -216,7 +216,7 @@ export default function ENSHistory({ ensName, owners, currentOwner, expiryDate, 
           ? new Date(nextOwner.startDate)
           : nextOwner.startDate;
         
-        const currentEndDate = endDate || now;
+        const currentEndDate: Date = endDate || now;
         
         // If there's a gap, check for burn events and add them, then add dormant period
         if (nextStartDate.getTime() > currentEndDate.getTime()) {
@@ -246,23 +246,22 @@ export default function ENSHistory({ ensName, owners, currentOwner, expiryDate, 
           }
           
           // Add dormant period after burn (or gap if no burn)
-          const dormantStart = relevantBurns.length > 0 
-            ? (typeof relevantBurns[relevantBurns.length - 1].date === "string" 
-                ? new Date(relevantBurns[relevantBurns.length - 1].date) 
-                : relevantBurns[relevantBurns.length - 1].date)
+          // burnEvents.date is always a string, so convert to Date
+          const dormantStartDate: Date = relevantBurns.length > 0 
+            ? new Date(relevantBurns[relevantBurns.length - 1].date)
             : currentEndDate;
           
           periods.push({
             owner: {
               address: "0x0000000000000000000000000000000000000000",
-              startDate: dormantStart,
+              startDate: dormantStartDate,
               endDate: nextStartDate,
               transactionHash: "",
             },
-            startDate: dormantStart,
+            startDate: dormantStartDate,
             endDate: nextStartDate,
             isDormant: true,
-            duration: nextStartDate.getTime() - dormantStart.getTime(),
+            duration: nextStartDate.getTime() - dormantStartDate.getTime(),
           });
         }
       }

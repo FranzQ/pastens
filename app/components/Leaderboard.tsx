@@ -84,11 +84,11 @@ export default function Leaderboard({ onDomainClick }: LeaderboardProps) {
       {/* Collapsible Header */}
       <button
         onClick={toggleExpanded}
-        className="w-full p-6 md:p-8 flex items-center justify-between hover:bg-gray-50 transition-colors text-left"
+        className="w-full p-4 md:p-5 flex items-center justify-between hover:bg-gray-50 transition-colors text-left"
       >
-        <div className="flex items-center gap-3">
-          <Trophy className="text-yellow-500" size={24} />
-          <h2 className="text-xl font-bold" style={{ color: "#011A25" }}>
+        <div className="flex items-center gap-2">
+          <Trophy className="text-yellow-500" size={20} />
+          <h2 className="text-lg font-bold" style={{ color: "#011A25" }}>
             Top 10 Most Transferred ENS Names
           </h2>
         </div>
