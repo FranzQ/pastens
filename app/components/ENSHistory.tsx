@@ -388,11 +388,26 @@ export default function ENSHistory({ ensName, owners, currentOwner }: ENSHistory
           {/* Vertical Timeline */}
           <div className="relative">
             {/* Vertical line connecting the markers in the center */}
-            {/* Height calculation: Very generous to ensure it reaches all cards
-                - Using 12rem per gap to account for year labels, spacing, and card heights
-                - Plus 6rem extra padding at the bottom to ensure it extends well past the last dot
+            {/* Height calculation: Very generous to ensure it reaches all cards on both mobile and desktop
+                - Mobile: space-y-4 (1rem) but cards stack vertically making them much taller
+                - Desktop: space-y-6 (1.5rem) with more horizontal layout
+                - Using 20rem per gap for mobile to account for tall stacked cards
+                - Plus 10rem extra padding at the bottom for mobile
             */}
-            <div className="absolute left-1/2 top-0 transform -translate-x-1/2 w-0.5 bg-gradient-to-b from-gray-200 via-gray-300 to-gray-200" style={{ height: timeline.length > 0 ? `${(timeline.length - 1) * 12 + 6}rem` : '0', marginTop: '3rem' }}></div>
+            <div 
+              className="absolute left-1/2 top-0 transform -translate-x-1/2 w-0.5 bg-gradient-to-b from-gray-200 via-gray-300 to-gray-200 md:hidden" 
+              style={{ 
+                height: timeline.length > 0 ? `${(timeline.length - 1) * 20 + 10}rem` : '0', 
+                marginTop: '3rem' 
+              }}
+            ></div>
+            <div 
+              className="absolute left-1/2 top-0 transform -translate-x-1/2 w-0.5 bg-gradient-to-b from-gray-200 via-gray-300 to-gray-200 hidden md:block" 
+              style={{ 
+                height: timeline.length > 0 ? `${(timeline.length - 1) * 12 + 6}rem` : '0', 
+                marginTop: '3rem' 
+              }}
+            ></div>
             
             <div className="space-y-4 md:space-y-6 relative">
               {[...timeline].reverse().map((period, originalIndex) => {

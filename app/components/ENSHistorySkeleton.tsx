@@ -25,9 +25,17 @@ export default function ENSHistorySkeleton() {
         
         {/* Vertical Timeline */}
         <div className="relative">
-          {/* Vertical line - using same calculation as main component: (items - 1) * 12 + 6 rem */}
-          {/* Skeleton shows 3 items, so: (3 - 1) * 12 + 6 = 30rem */}
-          <div className="absolute left-1/2 top-0 transform -translate-x-1/2 w-0.5 bg-gray-200" style={{ height: '30rem', marginTop: '3rem' }}></div>
+          {/* Vertical line - responsive like main component */}
+          {/* Mobile: (3 - 1) * 20 + 10 = 50rem */}
+          {/* Desktop: (3 - 1) * 12 + 6 = 30rem */}
+          <div 
+            className="absolute left-1/2 top-0 transform -translate-x-1/2 w-0.5 bg-gray-200 md:hidden" 
+            style={{ height: '50rem', marginTop: '3rem' }}
+          ></div>
+          <div 
+            className="absolute left-1/2 top-0 transform -translate-x-1/2 w-0.5 bg-gray-200 hidden md:block" 
+            style={{ height: '30rem', marginTop: '3rem' }}
+          ></div>
           
           <div className="space-y-4 md:space-y-6 relative">
             {[1, 2, 3].map((index) => (
