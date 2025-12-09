@@ -15,6 +15,24 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "pastens — ENS Ownership History",
   description: "Explore the ownership history of Ethereum Name Service (ENS) domains",
+  openGraph: {
+    title: "pastens — ENS Ownership History",
+    description: "Explore the ownership history of Ethereum Name Service (ENS) domains",
+    images: [
+      {
+        url: "/seo.png",
+        width: 1200,
+        height: 630,
+        alt: "pastens — ENS Ownership History",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "pastens — ENS Ownership History",
+    description: "Explore the ownership history of Ethereum Name Service (ENS) domains",
+    images: ["/seo.png"],
+  },
 };
 
 export default function RootLayout({
