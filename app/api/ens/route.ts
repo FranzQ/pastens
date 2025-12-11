@@ -277,7 +277,7 @@ export async function GET(request: NextRequest) {
       isMarketplace?: boolean;
       marketplaceName?: string;
     }> = [];
-    
+
     // Track burn events separately
     let burnEvents: Array<{
       date: Date;
@@ -290,7 +290,11 @@ export async function GET(request: NextRequest) {
     if (rpcUrl) {
       const publicClient = createPublicClient({
         chain: mainnet,
-        transport: http(rpcUrl),
+        transport: http(rpcUrl, {
+          batch: {
+            batchSize: 10_240, // Batch multiple RPC requests into multicalls
+          },
+        }),
       });
 
       // Fetch block timestamps for all transfers
@@ -530,7 +534,7 @@ export async function GET(request: NextRequest) {
               // Registration must happen before any transfers (including burns)
               // Use the earlier of registration date or first transfer date as start
               const registrationStartDate = regDate < firstOwnerDate ? regDate : firstOwnerDate;
-              
+
               if (!registrantIsCurrentOwner) {
                 owners.unshift({
                   address: registration.registrant.id,
