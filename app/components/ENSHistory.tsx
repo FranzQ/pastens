@@ -13,6 +13,8 @@ export interface ENSOwner {
   marketplaceName?: string;
   avatar?: string;
   isBurned?: boolean;
+  followersCount?: number;
+  followingCount?: number;
 }
 
 interface BurnEvent {
@@ -387,7 +389,16 @@ export default function ENSHistory({ ensName, owners, currentOwner, expiryDate, 
             </div>
           )}
           
-          <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4 relative" style={{ zIndex: 2 }}>
+          <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4 relative" style={{ color: '#011A25', zIndex: 2 }}>
+            Current Owner
+          </h3>
+          <a 
+            href={`https://efp.app/${currentOwner.address}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4 relative hover:opacity-80 transition-opacity cursor-pointer"
+            style={{ zIndex: 2 }}
+          >
             {currentOwner.avatar ? (
               <img 
                 src={currentOwner.avatar} 
@@ -408,17 +419,30 @@ export default function ENSHistory({ ensName, owners, currentOwner, expiryDate, 
             >
               <User className="text-blue-600" size={18} />
             </div>
-            <h3 className="text-lg md:text-xl font-bold" style={{ color: '#011A25' }}>
-              Current Owner
-            </h3>
-          </div>
-          <div className="space-y-2 md:space-y-3 relative" style={{ zIndex: 2 }}>
-            <div>
-              <span className="text-xs md:text-sm font-medium" style={{ color: '#011A25', opacity: 0.8 }}>Address: </span>
-              <span className="font-mono text-sm md:text-base font-semibold break-all" style={{ color: '#011A25' }}>
-                {currentOwner.ensName || formatAddress(currentOwner.address)}
-              </span>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-mono text-sm md:text-base font-semibold break-all" style={{ color: '#011A25' }}>
+                  {currentOwner.ensName || formatAddress(currentOwner.address)}
+                </span>
+                {currentOwner.ensName && (
+                  <span className="font-mono text-xs md:text-sm break-all" style={{ color: '#011A25', opacity: 0.6 }}>
+                    ({currentOwner.address})
+                  </span>
+                )}
+              </div>
+              {(currentOwner.followersCount !== undefined || currentOwner.followingCount !== undefined) && (
+                <div className="flex items-center gap-3 text-xs md:text-sm" style={{ color: '#011A25', opacity: 0.7 }}>
+                  <span>
+                    {currentOwner.followingCount ?? 0} following
+                  </span>
+                  <span>
+                    {currentOwner.followersCount ?? 0} followers
+                  </span>
+                </div>
+              )}
             </div>
+          </a>
+          <div className="space-y-2 md:space-y-3 relative" style={{ zIndex: 2 }}>
             <div className="flex items-center gap-2 text-xs md:text-sm" style={{ color: '#011A25', opacity: 0.8 }}>
               <Clock size={16} className="text-gray-400 flex-shrink-0" />
               <span className="font-medium break-words">Owned since {formatDateFull(currentOwner.startDate)}</span>
