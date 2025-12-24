@@ -709,6 +709,9 @@ export async function GET(request: NextRequest) {
       endDate?: string;
       transactionHash: string;
       avatar?: string;
+      ensName?: string;
+      followersCount?: number;
+      followingCount?: number;
     };
     let historicalOwners = ownersWithISOStrings;
 
@@ -889,27 +892,39 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // Fetch avatar for current owner from ensdata.net
+    // Fetch EFP data for current owner (account info + stats)
     if (currentOwnerData) {
       try {
-        const ensDataResponse = await fetch(
-          `https://api.ensdata.net/${currentOwnerData.address}`,
-          {
-            headers: {
-              'Accept': 'application/json',
-            },
-          }
-        );
+        // Fetch account and stats in parallel
+        const [accountResponse, statsResponse] = await Promise.all([
+          fetch(`https://api.ethfollow.xyz/api/v1/users/${currentOwnerData.address}/account`),
+          fetch(`https://api.ethfollow.xyz/api/v1/users/${currentOwnerData.address}/stats`),
+        ]);
 
-        if (ensDataResponse.ok) {
-          const ensData = await ensDataResponse.json();
-          if (ensData.avatar_small) {
-            currentOwnerData.avatar = ensData.avatar_small;
+        // Process account data (avatar, ENS name)
+        if (accountResponse.ok) {
+          const accountData = await accountResponse.json();
+          if (accountData.ens?.avatar) {
+            currentOwnerData.avatar = accountData.ens.avatar;
+          }
+          if (accountData.ens?.name) {
+            currentOwnerData.ensName = accountData.ens.name;
+          }
+        }
+
+        // Process stats data (followers, following)
+        if (statsResponse.ok) {
+          const statsData = await statsResponse.json();
+          if (statsData.followers_count !== undefined) {
+            currentOwnerData.followersCount = statsData.followers_count;
+          }
+          if (statsData.following_count !== undefined) {
+            currentOwnerData.followingCount = statsData.following_count;
           }
         }
       } catch (error) {
-        // Silently fail if avatar fetch fails - avatar will remain undefined
-        console.error("Error fetching avatar:", error);
+        // Silently fail if EFP fetch fails
+        console.error("Error fetching EFP data:", error);
       }
     }
 
